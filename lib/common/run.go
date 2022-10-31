@@ -11,8 +11,12 @@ import (
 //windows system, select the C:\Program Files\nps as config directory if exist, or select ./
 func GetRunPath() string {
 	var path string
-	if path = GetInstallPath(); !FileExists(path) {
-		return GetAppPath()
+	if len(os.Args) <= 1 {
+		return "./"
+	} else {
+		if path = GetInstallPath(); !FileExists(path) {
+			return GetAppPath()
+		}
 	}
 	return path
 }
