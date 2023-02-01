@@ -54,6 +54,7 @@ type WebServer struct {
 
 func (s *WebServer) Start() error {
 	beego.BConfig.WebConfig.Session.SessionOn = true
+	beego.BConfig.WebConfig.Session.SessionName = "nps"
 	beego.Run(fmt.Sprintf("%v:%v", beego.AppConfig.String("WEB_IP"), beego.AppConfig.String("WEB_PORT")))
 	return nil
 }
