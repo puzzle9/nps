@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"ehang.io/nps-mux"
+	"github.com/xtaci/kcp-go"
 	"net"
 	"net/http"
 	"strconv"
