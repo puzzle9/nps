@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package daemon
@@ -9,7 +10,7 @@ import (
 	"syscall"
 
 	"ehang.io/nps/lib/common"
-	"github.com/astaxie/beego"
+	"github.com/beego/beego"
 )
 
 func init() {

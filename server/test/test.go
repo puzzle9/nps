@@ -7,7 +7,7 @@ import (
 
 	"ehang.io/nps/lib/common"
 	"ehang.io/nps/lib/file"
-	"github.com/astaxie/beego"
+	"github.com/beego/beego"
 )
 
 func TestServerConfig() {

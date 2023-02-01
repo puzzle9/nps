@@ -2,17 +2,12 @@ package install
 
 import (
 	"ehang.io/nps/lib/common"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/c4milo/unpackit"
 	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -134,62 +129,6 @@ RestartSec=120
 WantedBy=multi-user.target
 `
 
-func UpdateNps() {
-	destPath := downloadLatest("server")
-	//复制文件到对应目录
-	copyStaticFile(destPath, "nps")
-	fmt.Println("Update completed, please restart")
-}
-
-func UpdateNpc() {
-	destPath := downloadLatest("client")
-	//复制文件到对应目录
-	copyStaticFile(destPath, "npc")
-	fmt.Println("Update completed, please restart")
-}
-
-type release struct {
-	TagName string `json:"tag_name"`
-}
-
-func downloadLatest(bin string) string {
-	// get version
-	data, err := http.Get("https://api.github.com/repos/ehang-io/nps/releases/latest")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	b, err := ioutil.ReadAll(data.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	rl := new(release)
-	json.Unmarshal(b, &rl)
-	version := rl.TagName
-	fmt.Println("the latest version is", version)
-	filename := runtime.GOOS + "_" + runtime.GOARCH + "_" + bin + ".tar.gz"
-	// download latest package
-	downloadUrl := fmt.Sprintf("https://ehang.io/nps/releases/download/%s/%s", version, filename)
-	fmt.Println("download package from ", downloadUrl)
-	resp, err := http.Get(downloadUrl)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	destPath, err := unpackit.Unpack(resp.Body, "")
-	if err != nil {
-		log.Fatal(err)
-	}
-	if bin == "server" {
-		destPath = strings.Replace(destPath, "/web", "", -1)
-		destPath = strings.Replace(destPath, `\web`, "", -1)
-		destPath = strings.Replace(destPath, "/views", "", -1)
-		destPath = strings.Replace(destPath, `\views`, "", -1)
-	} else {
-		destPath = strings.Replace(destPath, `\conf`, "", -1)
-		destPath = strings.Replace(destPath, "/conf", "", -1)
-	}
-	return destPath
-}
-
 func copyStaticFile(srcPath, bin string) string {
 	path := common.GetInstallPath()
 	if bin == "nps" {
@@ -255,11 +194,11 @@ func InstallNps() string {
 	log.Println("The new configuration file is located in", path, "you can edit them")
 	if !common.IsWindows() {
 		log.Println(`You can start with:
-nps start|stop|restart|uninstall|update or nps-update update
+nps start|stop|restart|uninstall
 anywhere!`)
 	} else {
 		log.Println(`You can copy executable files to any directory and start working with:
-nps.exe start|stop|restart|uninstall|update or nps-update.exe update
+nps.exe start|stop|restart|uninstall
 now!`)
 	}
 	chMod(common.GetLogPath(), 0777)
@@ -309,7 +248,7 @@ func CopyDir(srcPath string, destPath string) error {
 	return err
 }
 
-//生成目录并拷贝文件
+// 生成目录并拷贝文件
 func copyFile(src, dest string) (w int64, err error) {
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -344,7 +283,7 @@ func copyFile(src, dest string) (w int64, err error) {
 	return io.Copy(dstFile, srcFile)
 }
 
-//检测文件夹路径时候存在
+// 检测文件夹路径时候存在
 func pathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {

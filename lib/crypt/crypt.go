@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//en
+// en
 func AesEncrypt(origData, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -25,7 +25,7 @@ func AesEncrypt(origData, key []byte) ([]byte, error) {
 	return crypted, nil
 }
 
-//de
+// de
 func AesDecrypt(crypted, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -39,14 +39,14 @@ func AesDecrypt(crypted, key []byte) ([]byte, error) {
 	return origData, err
 }
 
-//Completion when the length is insufficient
+// Completion when the length is insufficient
 func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-//Remove excess
+// Remove excess
 func PKCS5UnPadding(origData []byte) (error, []byte) {
 	length := len(origData)
 	unpadding := int(origData[length-1])
@@ -56,14 +56,14 @@ func PKCS5UnPadding(origData []byte) (error, []byte) {
 	return nil, origData[:(length - unpadding)]
 }
 
-//Generate 32-bit MD5 strings
+// Generate 32-bit MD5 strings
 func Md5(s string) string {
 	h := md5.New()
 	h.Write([]byte(s))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-//Generating Random Verification Key
+// Generating Random Verification Key
 func GetRandomString(l int) string {
 	str := "0123456789abcdefghijklmnopqrstuvwxyz"
 	bytes := []byte(str)

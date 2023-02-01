@@ -12,8 +12,8 @@ import (
 	"ehang.io/nps/lib/conn"
 	"ehang.io/nps/lib/file"
 	"ehang.io/nps/server/connection"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego"
+	"github.com/beego/beego/logs"
 )
 
 type TunnelModeServer struct {
@@ -22,7 +22,7 @@ type TunnelModeServer struct {
 	listener net.Listener
 }
 
-//tcp|http|host
+// tcp|http|host
 func NewTunnelModeServer(process process, bridge NetBridge, task *file.Tunnel) *TunnelModeServer {
 	s := new(TunnelModeServer)
 	s.bridge = bridge
@@ -31,7 +31,7 @@ func NewTunnelModeServer(process process, bridge NetBridge, task *file.Tunnel) *
 	return s
 }
 
-//开始
+// 开始
 func (s *TunnelModeServer) Start() error {
 	return conn.NewTcpListenerAndProcess(s.task.ServerIp+":"+strconv.Itoa(s.task.Port), func(c net.Conn) {
 		if err := s.CheckFlowAndConnNum(s.task.Client); err != nil {
@@ -45,17 +45,17 @@ func (s *TunnelModeServer) Start() error {
 	}, &s.listener)
 }
 
-//close
+// close
 func (s *TunnelModeServer) Close() error {
 	return s.listener.Close()
 }
 
-//web管理方式
+// web管理方式
 type WebServer struct {
 	BaseServer
 }
 
-//开始
+// 开始
 func (s *WebServer) Start() error {
 	p, _ := beego.AppConfig.Int("web_port")
 	if p == 0 {
@@ -68,7 +68,7 @@ func (s *WebServer) Start() error {
 	err := errors.New("Web management startup failure ")
 	var l net.Listener
 	if l, err = connection.GetWebManagerListener(); err == nil {
-		beego.InitBeforeHTTPRun()
+		//beego.InitBeforeHTTPRun()
 		if beego.AppConfig.String("web_open_ssl") == "true" {
 			keyPath := beego.AppConfig.String("web_key_file")
 			certPath := beego.AppConfig.String("web_cert_file")
@@ -86,7 +86,7 @@ func (s *WebServer) Close() error {
 	return nil
 }
 
-//new
+// new
 func NewWebServer(bridge *bridge.Bridge) *WebServer {
 	s := new(WebServer)
 	s.bridge = bridge
@@ -95,7 +95,7 @@ func NewWebServer(bridge *bridge.Bridge) *WebServer {
 
 type process func(c *conn.Conn, s *TunnelModeServer) error
 
-//tcp proxy
+// tcp proxy
 func ProcessTunnel(c *conn.Conn, s *TunnelModeServer) error {
 	targetAddr, err := s.task.Target.GetRandomTarget()
 	if err != nil {
@@ -106,7 +106,7 @@ func ProcessTunnel(c *conn.Conn, s *TunnelModeServer) error {
 	return s.DealClient(c, s.task.Client, targetAddr, nil, common.CONN_TCP, nil, s.task.Flow, s.task.Target.LocalProxy)
 }
 
-//http proxy
+// http proxy
 func ProcessHttp(c *conn.Conn, s *TunnelModeServer) error {
 	_, addr, rb, err, r := c.GetHost()
 	if err != nil {

@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego/logs"
 	"time"
 )
 

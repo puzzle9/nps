@@ -22,7 +22,7 @@ var (
 	once sync.Once
 )
 
-//init csv from file
+// init csv from file
 func GetDb() *DbUtils {
 	once.Do(func() {
 		jsonDb := NewJsonDb(common.GetRunPath())
@@ -121,7 +121,7 @@ func (s *DbUtils) DelTask(id int) error {
 	return nil
 }
 
-//md5 password
+// md5 password
 func (s *DbUtils) GetTaskByMd5Password(p string) (t *Tunnel) {
 	s.JsonDb.Tasks.Range(func(key, value interface{}) bool {
 		if crypt.Md5(value.(*Tunnel).Password) == p {
@@ -315,7 +315,7 @@ func (s *DbUtils) GetHostById(id int) (h *Host, err error) {
 	return
 }
 
-//get key by host from x
+// get key by host from x
 func (s *DbUtils) GetInfoByHost(host string, r *http.Request) (h *Host, err error) {
 	var hosts []*Host
 	//Handling Ported Access

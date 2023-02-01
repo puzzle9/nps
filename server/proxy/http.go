@@ -19,7 +19,7 @@ import (
 	"ehang.io/nps/lib/conn"
 	"ehang.io/nps/lib/file"
 	"ehang.io/nps/server/connection"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego/logs"
 )
 
 type httpServer struct {

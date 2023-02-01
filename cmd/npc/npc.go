@@ -9,7 +9,7 @@ import (
 	"ehang.io/nps/lib/version"
 	"flag"
 	"fmt"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego/logs"
 	"github.com/ccding/go-stun/stun"
 	"github.com/kardianos/service"
 	"os"
@@ -110,9 +110,6 @@ func main() {
 		case "register":
 			flag.CommandLine.Parse(os.Args[2:])
 			client.RegisterLocalIp(*serverAddr, *verifyKey, *connType, *proxyUrl, *registerTime)
-		case "update":
-			install.UpdateNpc()
-			return
 		case "nat":
 			c := stun.NewClient()
 			c.SetServerAddr(*stunAddr)

@@ -11,8 +11,8 @@ import (
 	"ehang.io/nps/lib/conn"
 	"ehang.io/nps/lib/crypt"
 	"ehang.io/nps/lib/file"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego"
+	"github.com/beego/beego/logs"
 	"github.com/pkg/errors"
 )
 
@@ -32,7 +32,7 @@ func NewHttpsServer(l net.Listener, bridge NetBridge, useCache bool, cacheLen in
 	return https
 }
 
-//start https server
+// start https server
 func (https *HttpsServer) Start() error {
 	if b, err := beego.AppConfig.Bool("https_just_proxy"); err == nil && b {
 		conn.Accept(https.listener, func(c net.Conn) {
@@ -99,7 +99,7 @@ func (https *HttpsServer) NewHttps(l net.Listener, certFile string, keyFile stri
 	}()
 }
 
-//handle the https which is just proxy to other client
+// handle the https which is just proxy to other client
 func (https *HttpsServer) handleHttps(c net.Conn) {
 	hostName, rb := GetServerNameFromClientHello(c)
 	var targetAddr string

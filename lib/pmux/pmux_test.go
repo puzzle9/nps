@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego/logs"
 )
 
 func TestPortMux_Close(t *testing.T) {

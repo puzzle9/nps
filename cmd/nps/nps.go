@@ -21,8 +21,8 @@ import (
 	"ehang.io/nps/lib/common"
 	"ehang.io/nps/lib/crypt"
 	"ehang.io/nps/lib/daemon"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego"
+	"github.com/beego/beego/logs"
 
 	"github.com/kardianos/service"
 )
@@ -142,9 +142,6 @@ func main() {
 				os.Remove("/etc/rc.d/S90" + svcConfig.Name)
 				os.Remove("/etc/rc.d/K02" + svcConfig.Name)
 			}
-			return
-		case "update":
-			install.UpdateNps()
 			return
 		default:
 			logs.Error("command is not support")

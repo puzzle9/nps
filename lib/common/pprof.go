@@ -1,8 +1,8 @@
 package common
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego"
+	"github.com/beego/beego/logs"
 	"net/http"
 	_ "net/http/pprof"
 )
