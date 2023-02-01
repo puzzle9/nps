@@ -8,8 +8,8 @@ import (
 )
 
 func InitPProfFromFile() {
-	ip := beego.AppConfig.String("pprof_ip")
-	p := beego.AppConfig.String("pprof_port")
+	ip := beego.AppConfig.String("PPROF_IP")
+	p := beego.AppConfig.String("PPROF_PORT")
 	if len(ip) > 0 && len(p) > 0 && IsPort(p) {
 		runPProf(ip + ":" + p)
 	}

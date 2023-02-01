@@ -34,13 +34,6 @@ func init() {
 
 // init task from db
 func InitFromCsv() {
-	//Add a public password
-	if vkey := beego.AppConfig.String("public_vkey"); vkey != "" {
-		c := file.NewClient(vkey, true, true)
-		file.GetDb().NewClient(c)
-		RunList.Store(c.Id, nil)
-		//RunList[c.Id] = nil
-	}
 	//Initialize services in server-side files
 	file.GetDb().JsonDb.Tasks.Range(func(key, value interface{}) bool {
 		if value.(*file.Tunnel).Status {
@@ -93,7 +86,7 @@ func StartNewServer(bridgePort int, cnf *file.Tunnel, bridgeType string, bridgeD
 			os.Exit(0)
 		}
 	}()
-	if p, err := beego.AppConfig.Int("p2p_port"); err == nil {
+	if p, err := beego.AppConfig.Int("P2P_PORT"); err == nil {
 		go proxy.NewP2PServer(p).Start()
 		go proxy.NewP2PServer(p + 1).Start()
 		go proxy.NewP2PServer(p + 2).Start()
@@ -146,11 +139,11 @@ func NewMode(Bridge *bridge.Bridge, c *file.Tunnel) proxy.Service {
 		AddTask(t)
 		service = proxy.NewWebServer(Bridge)
 	case "httpHostServer":
-		httpPort, _ := beego.AppConfig.Int("http_proxy_port")
-		httpsPort, _ := beego.AppConfig.Int("https_proxy_port")
-		useCache, _ := beego.AppConfig.Bool("http_cache")
-		cacheLen, _ := beego.AppConfig.Int("http_cache_length")
-		addOrigin, _ := beego.AppConfig.Bool("http_add_origin_header")
+		httpPort, _ := beego.AppConfig.Int("HTTP_PROXY_PORT")
+		httpsPort, _ := beego.AppConfig.Int("HTTPS_PROXY_PORT")
+		useCache, _ := beego.AppConfig.Bool("HTTP_CACHE")
+		cacheLen, _ := beego.AppConfig.Int("HTTP_CACHE_LENGTH")
+		addOrigin, _ := beego.AppConfig.Bool("HTTP_ADD_ORIGIN_HEADER")
 		service = proxy.NewHttp(Bridge, c, httpPort, httpsPort, useCache, cacheLen, addOrigin)
 	}
 	return service
@@ -193,7 +186,7 @@ func AddTask(t *file.Tunnel) error {
 		logs.Error("taskId %d start error port %d open failed", t.Id, t.Port)
 		return errors.New("the port open error")
 	}
-	if minute, err := beego.AppConfig.Int("flow_store_interval"); err == nil && minute > 0 {
+	if minute, err := beego.AppConfig.Int("FLOW_STORE_INTERVAL"); err == nil && minute > 0 {
 		go flowSession(time.Minute * time.Duration(minute))
 	}
 	if svr := NewMode(Bridge, t); svr != nil {
@@ -354,9 +347,6 @@ func GetDashboardData() map[string]interface{} {
 	data["version"] = version.VERSION
 	data["hostCount"] = common.GeSynctMapLen(file.GetDb().JsonDb.Hosts)
 	data["clientCount"] = common.GeSynctMapLen(file.GetDb().JsonDb.Clients)
-	if beego.AppConfig.String("public_vkey") != "" { //remove public vkey
-		data["clientCount"] = data["clientCount"].(int) - 1
-	}
 	dealClientData()
 	c := 0
 	var in, out int64
@@ -397,14 +387,14 @@ func GetDashboardData() map[string]interface{} {
 	data["httpProxyCount"] = http
 	data["secretCount"] = secret
 	data["p2pCount"] = p2p
-	data["bridgeType"] = beego.AppConfig.String("bridge_type")
-	data["httpProxyPort"] = beego.AppConfig.String("http_proxy_port")
-	data["httpsProxyPort"] = beego.AppConfig.String("https_proxy_port")
-	data["ipLimit"] = beego.AppConfig.String("ip_limit")
-	data["flowStoreInterval"] = beego.AppConfig.String("flow_store_interval")
-	data["serverIp"] = beego.AppConfig.String("p2p_ip")
-	data["p2pPort"] = beego.AppConfig.String("p2p_port")
-	data["logLevel"] = beego.AppConfig.String("log_level")
+	data["bridgeType"] = beego.AppConfig.String("BRIDGE_TYPE")
+	data["httpProxyPort"] = beego.AppConfig.String("HTTP_PROXY_PORT")
+	data["httpsProxyPort"] = beego.AppConfig.String("HTTPS_PROXY_PORT")
+	data["ipLimit"] = beego.AppConfig.String("IP_LIMIT")
+	data["flowStoreInterval"] = beego.AppConfig.String("FLOW_STORE_INTERVAL")
+	data["serverIp"] = beego.AppConfig.String("P2P_IP")
+	data["p2pPort"] = beego.AppConfig.String("P2P_PORT")
+	data["logLevel"] = beego.AppConfig.String("LOG_LEVEL")
 	tcpCount := 0
 
 	file.GetDb().JsonDb.Clients.Range(func(key, value interface{}) bool {

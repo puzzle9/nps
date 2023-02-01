@@ -1,3 +1,15 @@
+# idea
 .idea
+
+# config
+.env
+
+# build
 nps
 npc
+*.tar.gz
+
+# wap
+node_modules
+web/dist
+*.log

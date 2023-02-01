@@ -19,14 +19,14 @@ var (
 )
 
 func StartSystemInfo() {
-	if b, err := beego.AppConfig.Bool("system_info_display"); err == nil && b {
+	if b, err := beego.AppConfig.Bool("SYSTEM_INFO_DISPLAY"); err == nil && b {
 		ServerStatus = make([]map[string]interface{}, 0, 1500)
 		go getSeverStatus()
 	}
 }
 
 func InitAllowPort() {
-	p := beego.AppConfig.String("allow_ports")
+	p := beego.AppConfig.String("ALLOW_PORTS")
 	ports = common.GetPorts(p)
 }
 

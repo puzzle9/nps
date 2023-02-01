@@ -23,17 +23,17 @@ func TestServerConfig() {
 		}
 		return true
 	})
-	p, err := beego.AppConfig.Int("web_port")
+	p, err := beego.AppConfig.Int("WEB_PORT")
 	if err != nil {
 		log.Fatalln("Getting web management port error :", err)
 	} else {
 		isInArr(&postTcpArr, p, "Web Management port", "tcp")
 	}
 
-	if p := beego.AppConfig.String("bridge_port"); p != "" {
+	if p := beego.AppConfig.String("BRIDGE_PORT"); p != "" {
 		if port, err := strconv.Atoi(p); err != nil {
 			log.Fatalln("get Server and client communication portserror:", err)
-		} else if beego.AppConfig.String("bridge_type") == "kcp" {
+		} else if beego.AppConfig.String("BRIDGE_TYPE") == "kcp" {
 			isInArr(&postUdpArr, port, "Server and client communication ports", "udp")
 		} else {
 			isInArr(&postTcpArr, port, "Server and client communication ports", "tcp")

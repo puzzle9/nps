@@ -10,20 +10,18 @@ import (
 	"strings"
 	"sync"
 
+	"ehang.io/nps/api"
+	"ehang.io/nps/lib/common"
+	"ehang.io/nps/lib/crypt"
+	"ehang.io/nps/lib/daemon"
 	"ehang.io/nps/lib/file"
 	"ehang.io/nps/lib/install"
 	"ehang.io/nps/lib/version"
 	"ehang.io/nps/server"
 	"ehang.io/nps/server/connection"
 	"ehang.io/nps/server/tool"
-	"ehang.io/nps/web/routers"
-
-	"ehang.io/nps/lib/common"
-	"ehang.io/nps/lib/crypt"
-	"ehang.io/nps/lib/daemon"
 	"github.com/beego/beego"
 	"github.com/beego/beego/logs"
-
 	"github.com/kardianos/service"
 )
 
@@ -39,17 +37,17 @@ func main() {
 		common.PrintVersion()
 		return
 	}
-	if err := beego.LoadAppConfig("ini", filepath.Join(common.GetRunPath(), "conf", "nps.conf")); err != nil {
-		log.Fatalln("load config file error", err.Error())
+	if err := beego.LoadAppConfig("ini", filepath.Join(common.GetRunPath(), ".env")); err != nil {
+		log.Fatalln("load .env file error", err.Error())
 	}
 	common.InitPProfFromFile()
-	if level = beego.AppConfig.String("log_level"); level == "" {
+	if level = beego.AppConfig.String("LOG_LEVEL"); level == "" {
 		level = "7"
 	}
 	logs.Reset()
 	logs.EnableFuncCallDepth(true)
 	logs.SetLogFuncCallDepth(3)
-	logPath := beego.AppConfig.String("log_path")
+	logPath := beego.AppConfig.String("LOG_PATH")
 	if logPath == "" {
 		logPath = common.GetLogPath()
 	}
@@ -187,11 +185,11 @@ func (p *nps) run() error {
 }
 
 func run() {
-	routers.Init()
+	api.Init()
 	task := &file.Tunnel{
 		Mode: "webServer",
 	}
-	bridgePort, err := beego.AppConfig.Int("bridge_port")
+	bridgePort, err := beego.AppConfig.Int("BRIDGE_PORT")
 	if err != nil {
 		logs.Error("Getting bridge_port error", err)
 		os.Exit(0)
@@ -202,9 +200,9 @@ func run() {
 	crypt.InitTls()
 	tool.InitAllowPort()
 	tool.StartSystemInfo()
-	timeout, err := beego.AppConfig.Int("disconnect_timeout")
+	timeout, err := beego.AppConfig.Int("DISCONNECT_TIMEOUT")
 	if err != nil {
 		timeout = 60
 	}
-	go server.StartNewServer(bridgePort, task, beego.AppConfig.String("bridge_type"), timeout)
+	go server.StartNewServer(bridgePort, task, beego.AppConfig.String("BRIDGE_TYPE"), timeout)
 }

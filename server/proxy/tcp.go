@@ -1,17 +1,14 @@
 package proxy
 
 import (
-	"errors"
+	"fmt"
 	"net"
-	"net/http"
-	"path/filepath"
 	"strconv"
 
 	"ehang.io/nps/bridge"
 	"ehang.io/nps/lib/common"
 	"ehang.io/nps/lib/conn"
 	"ehang.io/nps/lib/file"
-	"ehang.io/nps/server/connection"
 	"github.com/beego/beego"
 	"github.com/beego/beego/logs"
 )
@@ -55,31 +52,10 @@ type WebServer struct {
 	BaseServer
 }
 
-// 开始
 func (s *WebServer) Start() error {
-	p, _ := beego.AppConfig.Int("web_port")
-	if p == 0 {
-		stop := make(chan struct{})
-		<-stop
-	}
 	beego.BConfig.WebConfig.Session.SessionOn = true
-	beego.SetStaticPath(beego.AppConfig.String("web_base_url")+"/static", filepath.Join(common.GetRunPath(), "web", "static"))
-	beego.SetViewsPath(filepath.Join(common.GetRunPath(), "web", "views"))
-	err := errors.New("Web management startup failure ")
-	var l net.Listener
-	if l, err = connection.GetWebManagerListener(); err == nil {
-		//beego.InitBeforeHTTPRun()
-		if beego.AppConfig.String("web_open_ssl") == "true" {
-			keyPath := beego.AppConfig.String("web_key_file")
-			certPath := beego.AppConfig.String("web_cert_file")
-			err = http.ServeTLS(l, beego.BeeApp.Handlers, certPath, keyPath)
-		} else {
-			err = http.Serve(l, beego.BeeApp.Handlers)
-		}
-	} else {
-		logs.Error(err)
-	}
-	return err
+	beego.Run(fmt.Sprintf("%v:%v", beego.AppConfig.String("WEB_IP"), beego.AppConfig.String("WEB_PORT")))
+	return nil
 }
 
 func (s *WebServer) Close() error {
