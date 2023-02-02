@@ -10,6 +10,13 @@
 - https://github.com/yisier/nps/releases
 - https://hub.docker.com/r/yisier1/npc
 
+
+# protoc
+
+```shell
+protoc --proto_path=../ --go_out=./api --go-grpc_out=./api ../protos/account/*.proto
+```
+
 # 基于
 
 - https://github.com/ehang-io/nps

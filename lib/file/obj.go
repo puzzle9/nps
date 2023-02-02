@@ -34,6 +34,7 @@ type Config struct {
 type Client struct {
 	Cnf             *Config
 	Id              int        //id
+	EncodeUserId    string     //account id
 	VerifyKey       string     //verify key
 	Addr            string     //the ip of client
 	Remark          string     //remark

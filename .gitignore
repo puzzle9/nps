@@ -2,6 +2,7 @@
 .idea
 
 # config
+/conf/*.json
 .env
 
 # build
@@ -11,5 +12,6 @@ npc
 
 # wap
 node_modules
-web/dist
+/web/*.d.ts
+/web/dist
 *.log

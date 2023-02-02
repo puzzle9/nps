@@ -9,10 +9,10 @@ type IndexController struct {
 	beego.Controller
 }
 
-func (s *IndexController) Start() {
+func (c *IndexController) Start() {
 	m := make(map[string]interface{})
 	m["name"] = beego.BConfig.AppName
 	m["time"] = time.Now().Unix()
-	s.Data["json"] = m
-	s.ServeJSON()
+	c.Data["json"] = m
+	c.ServeJSON()
 }
