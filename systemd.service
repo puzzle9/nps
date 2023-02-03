@@ -1,0 +1,12 @@
+[Unit]
+Description=nps
+After=network.target
+
+[Service]
+Restart=always
+Type=simple
+WorkingDirectory=/data/wwwroot/nps
+ExecStart=/data/wwwroot/nps/nps
+
+[Install]
+WantedBy=multi-user.target
