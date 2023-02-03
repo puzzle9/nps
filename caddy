@@ -1,0 +1,15 @@
+nps.test {
+    encode gzip
+    tls email
+
+    handle_path /api/* {
+        reverse_proxy 127.0.0.1:8023
+    }
+
+    root * /data/wwwroot/nps/web/dist
+    file_server
+
+    log {
+        output file /data/wwwlogs/eaten_nps.log
+    }
+}
