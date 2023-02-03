@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"ehang.io/nps/api/protos/account"
 	"github.com/beego/beego"
 	"github.com/beego/beego/logs"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"sync"
@@ -19,7 +21,14 @@ var (
 
 func getConn() *grpc.ClientConn {
 	once.Do(func() {
-		client, err := grpc.Dial(beego.AppConfig.String("GRPC_CLIENT_ACCOUNT_URL"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+		var credential credentials.TransportCredentials
+		if isTls, err := beego.AppConfig.Bool("GRPC_CLIENT_ACCOUNT_TLS"); err == nil && isTls {
+			credential = credentials.NewTLS(&tls.Config{})
+		} else {
+			credential = insecure.NewCredentials()
+		}
+
+		client, err := grpc.Dial(beego.AppConfig.String("GRPC_CLIENT_ACCOUNT_URL"), grpc.WithTransportCredentials(credential))
 		if err != nil {
 			logs.Error("grpc connect account: %v", err)
 		}

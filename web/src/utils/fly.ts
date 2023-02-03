@@ -5,7 +5,7 @@ import fly from 'flyio'
 fly.config.headers.Accept = 'application/json'
 fly.config.timeout = 10000
 fly.config.withCredentials = true
-fly.config.baseURL = import.meta.env.DEV ? '/api' : '/'
+fly.config.baseURL = '/api'
 
 const naive = createDiscreteApi(
     ['message', 'dialog', 'loadingBar'],

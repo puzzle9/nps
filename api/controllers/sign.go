@@ -11,7 +11,13 @@ type SignController struct {
 }
 
 func (c *SignController) In() {
-	c.Redirect(service.GetSignInUrl(), 302)
+	signInUrl := service.GetSignInUrl()
+
+	if signInUrl == "" {
+		signInUrl = "/"
+	}
+
+	c.Redirect(signInUrl, 302)
 }
 
 func (c *SignController) Out() {
