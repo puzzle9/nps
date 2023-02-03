@@ -12,17 +12,14 @@ export default defineConfig({
     publicDir: './public',
     server: {
         host: '127.0.0.1',
-        port: 3032,
+        port: 3042,
         proxy: {
             '/api': {
-                target: `http://127.0.0.1:8023`,
+                target: `http://127.0.0.1:3040`,
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, '')
             },
         }
-    },
-    build: {
-        outDir: './web/dist',
     },
     plugins: [
         vue(),
