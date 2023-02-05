@@ -13,3 +13,14 @@ nps.test {
         output file /data/wwwlogs/eaten_nps.log
     }
 }
+
+*.nps.test {
+    encode gzip
+    tls /etc/letsencrypt/live/nps.test/cert.pem /etc/letsencrypt/live/nps.test/privkey.pem
+
+    reverse_proxy 127.0.0.1:8025
+
+    log {
+        output file /data/wwwlogs/eaten_nps_proxy.log
+    }
+}

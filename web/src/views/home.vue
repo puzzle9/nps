@@ -214,7 +214,7 @@ const tunnel_form = ref<FormInst | null>(null),
           {
             title: '域名',
             key: 'url_domain',
-            width: 200,
+            width: 220,
             render: (row: any) =>
                 h(
                     NButton,
@@ -222,7 +222,7 @@ const tunnel_form = ref<FormInst | null>(null),
                       text: true,
                       onClick: () => {
                         toClipboard(row.url_domain)
-                        message.success('复制成功 暂只支持 http 或 https 访问')
+                        message.success('复制成功 暂只支持 https 访问')
                       },
                     },
                     {
