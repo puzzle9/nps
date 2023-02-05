@@ -61,7 +61,7 @@ func (c *SignController) Oauth() {
 			ConfigConnAllow: false,
 			RateLimit:       500,
 			Flow:            &file.Flow{},
-			MaxTunnelNum:    10,
+			MaxTunnelNum:    9,
 		}
 		if err := file.GetDb().NewClient(client); err != nil {
 			c.CustomAbort(500, "账户 注册失败")

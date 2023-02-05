@@ -50,7 +50,7 @@ func DealBridgeTask() {
 		case t := <-Bridge.OpenTask:
 			AddTask(t)
 		case t := <-Bridge.CloseTask:
-			StopServer(t.Id)
+			StopTask(t.Id)
 		case id := <-Bridge.CloseClient:
 			DelTunnelAndHostByClientId(id, true)
 			if v, ok := file.GetDb().JsonDb.Clients.Load(id); ok {
@@ -149,8 +149,8 @@ func NewMode(Bridge *bridge.Bridge, c *file.Tunnel) proxy.Service {
 	return service
 }
 
-// stop server
-func StopServer(id int) error {
+// stop task
+func StopTask(id int) error {
 	//if v, ok := RunList[id]; ok {
 	if v, ok := RunList.Load(id); ok {
 		if svr, ok := v.(proxy.Service); ok {
@@ -223,7 +223,7 @@ func StartTask(id int) error {
 func DelTask(id int) error {
 	//if _, ok := RunList[id]; ok {
 	if _, ok := RunList.Load(id); ok {
-		if err := StopServer(id); err != nil {
+		if err := StopTask(id); err != nil {
 			return err
 		}
 	}

@@ -22,39 +22,25 @@
                 <n-thing title="已用流量" :title-extra="`↑ ${(base.nps_flow_inlet / 1024 / 1024).toFixed(2)} MB / ↓ ${(base.nps_flow_export / 1024 / 1024).toFixed(2)} MB`"/>
               </n-list-item>
               <n-list-item>
-                <n-thing title="连接命令" :title-extra="base.nps_is_connect ? '在线' : '离线'">
+                <n-thing>
+                  <template #header>
+                    <n-button class="n-thing-header__title" text @click="connectCopy">连接命令</n-button>
+                  </template>
+                  <template #header-extra>
+                    <template v-if="base.nps_is_connect">在线</template>
+                    <n-button v-else text @click="updateVKey">离线</n-button>
+                  </template>
                   <template #description v-show="base.nps_bridge_domain">
-                    <code class="connect">./npc -server={{ base.nps_bridge_domain }}:{{ base.nps_bridge_port }}
-                      -vkey={{ base.nps_vkey }} -type={{ base.nps_bridge_type }}</code>
+                    <code class="connect">{{ connect }}</code>
                   </template>
                 </n-thing>
               </n-list-item>
             </n-list>
           </n-tab-pane>
-          <!--          <n-tab-pane name="domain" tab="域名列表"></n-tab-pane>-->
           <n-tab-pane name="tunnel" tab="隧道列表">
-            <n-form ref="tunnel" :model="tunnel_model">
-              <n-dynamic-input v-model:value="tunnel_model" :on-create="tunnel_create" :max="8" #="{ index, value }">
-                <n-form-item :show-label="false" :path="`[${index}].type`" :rule="tunnel_rules.type">
-                  <n-select v-model:value="tunnel_model[index].type" filterable placeholder="隧道类型" :options="tunnel_types" style="width: 135px"/>
-                </n-form-item>
-
-                <n-form-item :show-label="false">
-                  <n-input-number v-model:value="tunnel_model[index].port" placeholder="服务端端口" clearable :min="port_min" :max="port_max" :show-button="false" style="width: 120px"/>
-                </n-form-item>
-
-                <n-form-item :show-label="false" :path="`[${index}].target`" :rule="tunnel_rules.target">
-                  <n-input v-model:value="tunnel_model[index].target" placeholder="目标地址 如 :8080" type="textarea" rows="1" clearable/>
-                </n-form-item>
-
-                <n-form-item :show-label="false">
-                  <n-input v-model:value="tunnel_model[index].remark" placeholder="备注" type="textarea" maxlength="30" rows="1" show-count clearable/>
-                </n-form-item>
-              </n-dynamic-input>
-            </n-form>
+            <n-data-table :columns="tunnel_columns" :data="tunnel_data" :single-line="false" :scroll-x="950"/>
             <br/>
-            <n-button type="info" attr-type="button" :loading="tunnel_loading" @click="tunnelSubmit" block>保存
-            </n-button>
+            <n-button type="info" @click="tunnel_model_show = true" block>新增隧道</n-button>
           </n-tab-pane>
         </n-tabs>
       </n-spin>
@@ -78,33 +64,80 @@
       </div>
 
       <div v-show="tab_name == 'tunnel'">
-        <p>隧道类型:</p>
-        <ul v-for="info in tunnel_types" :key="info.value"><b>{{ info.label }}</b>: {{ info.placeholder }}</ul>
-        <p>服务端端口:</p>
-        <ul>可用区间为: {{ base.nps_allow_ports }}, 留空默认生成</ul>
-        <p>目标地址:</p>
-        <ul>代理到本地可以只填写端口号,在 TCP 隧道下可以填写多行支持负载均衡, 如 127.0.0.1:8080</ul>
         <p>示例:</p>
         <ul>
-          <small>隧道类型: TCP/UDP 服务端端口: 9080 目标地址: :8080 -> 访问服务器的 9080 端口相当于以 TCP/UDP 模式访问
-            本地的 8080 端口</small>
+          隧道类型: TCP/UDP 服务端端口: 9080 目标地址: :8080 -> 访问服务器的 9080 端口相当于以 TCP/UDP 模式访问
+          本地的 8080 端口
         </ul>
         <ul>
-          <small>隧道类型: HTTP/SOCKET5 服务端端口: 9090 目标地址: :9099 -> 将设备代理 IP 设为服务端 IP 端口设为 9090
-            相当于走了 HTTP/SOCKET5 模式的客户端代理</small>
+          隧道类型: HTTP/SOCKET5 服务端端口: 9090 目标地址: :9099 -> 将设备代理 IP 设为服务端 IP 端口设为 9090
+          相当于走了 HTTP/SOCKET5 模式的客户端代理
         </ul>
       </div>
     </n-card>
+
+    <n-modal v-model:show="tunnel_model_show" preset="card" title="新增隧道" size="huge" :bordered="false" :mask-closable="false" class="tunnel_model" style="width: 90%; max-width: 800px">
+      <n-form ref="tunnel_form" :model="tunnel_model" :rules="tunnel_rules">
+        <n-form-item label="隧道类型" path="type">
+          <n-select v-model:value="tunnel_model.type" filterable placeholder="隧道类型" :options="tunnel_types" :render-option="tunnelTypeRenderOption"/>
+        </n-form-item>
+        <n-form-item label="服务端端口" path="port">
+          <n-input-number
+              v-model:value="tunnel_model.port"
+              :placeholder="`可用区间为: ${base.nps_allow_ports}, 留空默认生成`"
+              clearable
+              :min="port_min"
+              :max="port_max"
+              :show-button="false"
+              style="width: 100%"
+          />
+        </n-form-item>
+        <n-form-item label="目标地址" path="target">
+          <n-input
+              v-model:value="tunnel_model.target"
+              placeholder="代理到本地可以只填写端口号,在 TCP 类型下可以填写多行支持负载均衡, 如
+:1024
+127.0.0.1:1314
+局域网IP:5210
+"
+              :rows="4"
+              type="textarea"
+              clearable
+          />
+        </n-form-item>
+        <n-form-item label="备注" path="remark">
+          <n-input v-model:value="tunnel_model.remark" placeholder="给自己看的备注" type="textarea" maxlength="30" show-count clearable/>
+        </n-form-item>
+      </n-form>
+
+      <template #action>
+        <div class="action">
+          <n-button type="info" quaternary @click="tunnel_model_show = false">取消</n-button>
+          <n-button type="info" class="save" :loading="tunnel_loading" @click="tunnelSubmit">保存</n-button>
+        </div>
+      </template>
+    </n-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import {createDiscreteApi, FormInst, FormRules} from 'naive-ui'
+import {
+  createDiscreteApi,
+  NTooltip,
+  NButton,
+  NPopconfirm,
+  FormInst,
+  FormRules,
+  DataTableColumns,
+  SelectOption
+} from 'naive-ui'
 import {useRouter, useRoute} from 'vue-router'
-import {ref, computed} from 'vue'
+import {ref, computed, h, VNode} from 'vue'
+import useClipboard from 'vue-clipboard3'
 import fly from '../utils/fly'
 
 const {message} = createDiscreteApi(['message'])
+const {toClipboard} = useClipboard()
 
 const router = useRouter(),
     route = useRoute()
@@ -112,7 +145,8 @@ const router = useRouter(),
 const tab_name = ref('info')
 
 const loading = ref(true),
-    base = ref({
+    base: any = ref({
+      nps_vkey: null,
       nps_flow_inlet: 0,
       nps_flow_export: 0,
     }),
@@ -136,8 +170,142 @@ const loading = ref(true),
 
 getBase()
 
-const tunnel = ref<FormInst | null>(null),
-    tunnel_model = ref([{}]),
+const connect = computed(
+    // @prettier-ignore
+    () =>
+        `${/windows|win32/i.test(navigator.userAgent) ? 'npc.exe' : './npc'} -server=${base.value.nps_bridge_domain}:${base.value.nps_bridge_port} -vkey=${base.value.nps_vkey} -type=${
+            base.value.nps_bridge_type
+        }`,
+)
+
+const connectCopy = () => {
+  toClipboard(connect.value)
+  message.success('复制成功')
+}
+
+const updateVKey = () => {
+  fly.post('/updateVKey').then((res: any) => {
+    message.success('更新成功')
+    base.value.nps_vkey = res.nps_vkey
+  })
+}
+
+const tunnel_form = ref<FormInst | null>(null),
+    tunnel_model_show = ref(false),
+    tunnel_columns: DataTableColumns = [
+      {
+        title: '#',
+        key: 'key',
+        width: 30,
+        render: (_, index) => `${index + 1}`,
+        fixed: 'left',
+      },
+      {
+        title: '隧道类型',
+        key: 'type',
+        width: 120,
+        render: (row: any) => tunnel_types.find((tunnel) => tunnel.value == row.type)?.label,
+      },
+      {
+        title: '访问地址',
+        key: 'url',
+        align: 'center',
+        children: [
+          {
+            title: '域名',
+            key: 'url_domain',
+            width: 200,
+            render: (row: any) =>
+                h(
+                    NButton,
+                    {
+                      text: true,
+                      onClick: () => {
+                        toClipboard(row.url_domain)
+                        message.success('复制成功 暂只支持 http 或 https 访问')
+                      },
+                    },
+                    {
+                      default: () => row.url_domain,
+                    },
+                ),
+          },
+          {
+            title: 'IP',
+            key: 'url_ip',
+            width: 180,
+            render: (row: any) =>
+                h(
+                    NButton,
+                    {
+                      text: true,
+                      onClick: () => {
+                        toClipboard(row.url_ip)
+                        message.success('复制成功')
+                      },
+                    },
+                    {
+                      default: () => row.url_ip,
+                    },
+                ),
+          },
+        ],
+      },
+      {
+        title: '目标地址',
+        key: 'target',
+        resizable: true,
+        minWidth: 150,
+      },
+      {
+        title: '备注',
+        key: 'remark',
+        resizable: true,
+        minWidth: 100,
+        ellipsis: {
+          tooltip: true,
+        },
+      },
+      {
+        title: '操作',
+        key: 'actions',
+        width: 70,
+        fixed: 'right',
+        render: (row: any, _index) =>
+            h(
+                NPopconfirm,
+                {
+                  showIcon: false,
+                  trigger: 'click',
+                  negativeText: '点错啦',
+                  positiveText: '没点错',
+                  onPositiveClick: async () => {
+                    await fly.delete('/tunnel', {
+                      id: row.id,
+                    })
+                    message.success('删除成功')
+                    tunnelGet()
+                  },
+                },
+                {
+                  trigger: () =>
+                      h(
+                          NButton,
+                          {
+                            type: 'warning',
+                            size: 'small',
+                          },
+                          {
+                            default: () => '删除',
+                          },
+                      ),
+                  default: () => `将删除 #${_index + 1} ${row.type} 隧道`,
+                },
+            ),
+      },
+    ],
+    tunnel_model = ref({}),
+    tunnel_data = ref([]),
     tunnel_rules: FormRules = {
       type: {
         required: true,
@@ -163,7 +331,7 @@ const tunnel = ref<FormInst | null>(null),
       },
       {
         label: 'HTTP 代理',
-        value: 'http',
+        value: 'httpProxy',
         placeholder: '让服务器作为 HTTP 代理,访问内网资源等.',
       },
       {
@@ -172,33 +340,34 @@ const tunnel = ref<FormInst | null>(null),
         placeholder: '让服务器作为 SOCKS5 代理,访问内网资源等.',
       },
     ],
-    tunnel_create = () => {
-      return {
-        type: null,
-        value: null,
-      }
-    },
+    tunnelTypeRenderOption = ({node, option}: { node: VNode; option: SelectOption }) =>
+        h(NTooltip, null, {
+          trigger: () => node,
+          default: () => option.placeholder,
+        }),
     tunnel_loading = ref(false),
     tunnelGet = () => {
       tunnel_loading.value = true
       fly
           .get('/tunnel')
           .then((res: any) => {
-            tunnel_model.value = res.rows
+            tunnel_data.value = res.rows || []
           })
           .finally(() => {
             tunnel_loading.value = false
           })
     },
     tunnelSubmit = async () => {
-      await tunnel.value?.validate((errors) => (errors ? message.error('貌似哪里不对') : null))
+      await tunnel_form.value?.validate((errors) => (errors ? message.error('貌似哪里不对') : null))
 
       tunnel_loading.value = true
       fly
           .post('/tunnel', tunnel_model.value)
           .then((res: any) => {
             message.success(res.message)
+            tunnel_model_show.value = false
             tunnelGet()
+            tunnel_model.value = {}
           })
           .finally(() => {
             tunnel_loading.value = false
@@ -218,7 +387,7 @@ const downloads = {
 <style lang="stylus" scoped>
 .info, .use
   width 98%
-  max-width 800px
+  max-width 1024px
   margin auto
 
   .connect
@@ -230,4 +399,11 @@ const downloads = {
 
   img
     width 100%
+
+.tunnel_model
+  .action
+    float right
+
+    .save
+      margin-left 10px
 </style>

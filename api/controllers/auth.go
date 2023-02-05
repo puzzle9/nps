@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"ehang.io/nps/api/service"
+	"ehang.io/nps/lib/crypt"
 	"ehang.io/nps/lib/file"
 	"ehang.io/nps/server"
 	"ehang.io/nps/server/tool"
@@ -60,6 +62,32 @@ func (c *AuthController) Base() {
 	c.ServeJSON()
 }
 
+func (c *AuthController) UpdateVKey() {
+	client, err := file.GetDb().JsonDb.GetClient(c.getClientId())
+	if err != nil {
+		c.CustomAbort(422, "客户端 异常")
+	}
+
+	if client.IsConnect {
+		c.CustomAbort(422, "将客户端断开后再进行更新")
+	}
+
+	clientId := client.Id
+
+	server.DelTunnelAndHostByClientId(clientId, false)
+	server.DelClientConnect(clientId)
+
+	vkey := crypt.GetRandomString(16)
+	client.VerifyKey = vkey
+
+	file.GetDb().JsonDb.StoreClientsToJsonFile()
+
+	data := make(map[string]any)
+	data["nps_vkey"] = vkey
+	c.Data["json"] = data
+	c.ServeJSON()
+}
+
 type Tunnel struct {
 	Type   string
 	Port   int
@@ -71,17 +99,31 @@ func (c *AuthController) getTunnels() ([]*file.Tunnel, int) {
 	return server.GetTunnel(0, 100, "", c.getClientId(), "")
 }
 
-func (c *AuthController) TunnelGet() {
+func (c *AuthController) TunnelLists() {
 	lists, count := c.getTunnels()
 
 	var rows []map[string]any
 	for i := 0; i < len(lists); i++ {
 		list := lists[i]
+		rowId, _ := service.HashIdEncode(list.Id)
+
+		var urlDomain string
+		hostId := list.HostId
+
+		if hostId != 0 {
+			if host, err := file.GetDb().GetHostById(hostId); err == nil {
+				urlDomain = host.Host
+			}
+		}
+
 		row := make(map[string]any)
+		row["id"] = rowId
 		row["type"] = list.Mode
 		row["port"] = list.Port
 		row["target"] = list.Target.TargetStr
 		row["remark"] = list.Remark
+		row["url_domain"] = urlDomain
+		row["url_ip"] = fmt.Sprintf("%v:%v", beego.AppConfig.String("BRIDGE_DOMAIN"), list.Port)
 		rows = append(rows, row)
 	}
 
@@ -93,21 +135,14 @@ func (c *AuthController) TunnelGet() {
 	c.ServeJSON()
 }
 
-func (c *AuthController) TunnelPost() {
-	var tunnels []Tunnel
+func (c *AuthController) TunnelCreate() {
+	var tunnel Tunnel
 	body := c.Ctx.Input.RequestBody
-	err := json.Unmarshal(body, &tunnels)
+	err := json.Unmarshal(body, &tunnel)
 	if err != nil {
 		println("json error", err.Error())
 		c.CustomAbort(422, err.Error())
 	}
-
-	oldTunnels, _ := c.getTunnels()
-	for i := 0; i < len(oldTunnels); i++ {
-		_ = server.DelTask(oldTunnels[i].Id)
-	}
-
-	tunnelLens := len(tunnels)
 
 	var client *file.Client
 
@@ -115,48 +150,106 @@ func (c *AuthController) TunnelPost() {
 		c.CustomAbort(422, "客户端有误 请联系管理员")
 	}
 
-	if client.MaxTunnelNum != 0 && tunnelLens >= client.MaxTunnelNum {
+	if client.MaxTunnelNum != 0 && client.GetTunnelNum() >= client.MaxTunnelNum {
 		c.CustomAbort(422, fmt.Sprintf("目前最多只能有 %v 个隧道", client.MaxTunnelNum))
 	}
 
-	for i := 0; i < tunnelLens; i++ {
-		tunnel := tunnels[i]
+	tunnelPort := tunnel.Port
+	tunnelType := tunnel.Type
 
-		id := int(file.GetDb().JsonDb.GetTaskId())
-		t := &file.Tunnel{
-			Port:      tunnel.Port,
-			ServerIp:  "",
-			Mode:      tunnel.Type,
-			Target:    &file.Target{TargetStr: tunnel.Target, LocalProxy: false},
-			Id:        id,
-			Status:    true,
-			Remark:    tunnel.Remark,
-			Password:  "",
-			LocalPath: "",
-			StripPre:  "",
-			Flow:      &file.Flow{},
+	switch tunnelType {
+	case "tcp":
+	case "udp":
+	case "socks5":
+	case "httpProxy":
+		tunnelType = tunnelType
+		break
+	default:
+		c.CustomAbort(422, "暂不支持此模式")
+		break
+	}
+
+	target := &file.Target{TargetStr: tunnel.Target, LocalProxy: false}
+
+	if tunnelPort <= 0 {
+		tunnelPort = tool.GenerateServerPort(tunnelType)
+	} else {
+		if !tool.TestServerPort(tunnelPort, tunnelType) {
+			c.CustomAbort(422, fmt.Sprintf("服务端端口 %v 已被使用", tunnelPort))
+		}
+	}
+
+	var hostId int
+
+	if tunnelType == "tcp" {
+		hostId = int(file.GetDb().JsonDb.GetHostId())
+		h := &file.Host{
+			Id:           hostId,
+			Host:         fmt.Sprintf("%v-%v.%v", tunnelPort, tunnelType, beego.AppConfig.String("HTTP_PROXY_HOST")),
+			Target:       target,
+			HeaderChange: "",
+			HostChange:   "",
+			Remark:       "",
+			Location:     "",
+			Flow:         &file.Flow{},
+			Scheme:       "http",
 		}
 
-		if t.Port <= 0 {
-			t.Port = tool.GenerateServerPort(t.Mode)
-		} else {
-			if !tool.TestServerPort(t.Port, t.Mode) {
-				c.CustomAbort(422, fmt.Sprintf("服务端端口 %v 已被使用", t.Port))
-			}
-		}
+		h.Client = client
 
-		t.Client = client
-
-		if err := file.GetDb().NewTask(t); err != nil {
-			c.CustomAbort(422, err.Error())
-		}
-		if err := server.AddTask(t); err != nil {
+		if err := file.GetDb().NewHost(h); err != nil {
 			c.CustomAbort(422, err.Error())
 		}
 	}
 
+	tunnelId := int(file.GetDb().JsonDb.GetTaskId())
+	t := &file.Tunnel{
+		Port:      tunnelPort,
+		ServerIp:  "",
+		Mode:      tunnelType,
+		Target:    target,
+		Id:        tunnelId,
+		Status:    true,
+		Remark:    tunnel.Remark,
+		Password:  "",
+		LocalPath: "",
+		StripPre:  "",
+		Flow:      &file.Flow{},
+		HostId:    hostId,
+	}
+
+	t.Client = client
+
+	if err := file.GetDb().NewTask(t); err != nil {
+		c.CustomAbort(422, err.Error())
+	}
+	if err := server.AddTask(t); err != nil {
+		c.CustomAbort(422, err.Error())
+	}
+
 	data := make(map[string]any)
-	data["message"] = "保存成功"
+	data["message"] = "添加成功"
+
+	c.Data["json"] = data
+	c.ServeJSON()
+}
+
+func (c *AuthController) TunnelDelete() {
+	ids, err := service.HashIdDecode(c.GetString("id"))
+	if err != nil {
+		c.CustomAbort(422, err.Error())
+	}
+
+	tunnel, err := file.GetDb().GetTask(ids[0])
+	if err != nil {
+		c.CustomAbort(422, err.Error())
+	}
+
+	_ = file.GetDb().DelHost(tunnel.HostId)
+	_ = server.DelTask(ids[0])
+
+	data := make(map[string]any)
+	data["message"] = "删除成功"
 
 	c.Data["json"] = data
 	c.ServeJSON()
