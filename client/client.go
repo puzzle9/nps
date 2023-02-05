@@ -3,7 +3,6 @@ package client
 import (
 	"bufio"
 	"bytes"
-	"ehang.io/nps-mux"
 	"github.com/xtaci/kcp-go"
 	"net"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"ehang.io/nps/lib/config"
 	"ehang.io/nps/lib/conn"
 	"ehang.io/nps/lib/crypt"
+	"ehang.io/nps/lib/nps-mux"
 	"github.com/beego/beego/logs"
 )
 

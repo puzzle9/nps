@@ -10,6 +10,8 @@
 - https://github.com/yisier/nps/releases
 - https://hub.docker.com/r/yisier1/npc
 
+# todo
+- [ ] 支持 `go 1.20`
 
 # protoc
 
