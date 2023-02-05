@@ -198,6 +198,7 @@ const tunnel = ref<FormInst | null>(null),
           .post('/tunnel', tunnel_model.value)
           .then((res: any) => {
             message.success(res.message)
+            tunnelGet()
           })
           .finally(() => {
             tunnel_loading.value = false
